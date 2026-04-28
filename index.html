@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SY HalalTrack — Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#16a34a;--green-d:#14532d;--green-l:#dcfce7;--green-m:#bbf7d0;
+  --amber:#d97706;--amber-l:#fef3c7;--amber-m:#fde68a;
+  --red:#dc2626;--red-l:#fee2e2;--red-m:#fecaca;
+  --blue:#2563eb;--blue-l:#dbeafe;--blue-m:#bfdbfe;
+  --purple:#7c3aed;--purple-l:#ede9fe;--purple-m:#ddd6fe;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
+  --gray-600:#4b5563;--gray-700:#374151;--gray-900:#111827;
+  --white:#ffffff;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --sh-md:0 4px 16px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
+  --sh-lg:0 10px 40px rgba(0,0,0,.13),0 4px 10px rgba(0,0,0,.08);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--gray-50);color:var(--gray-900);min-height:100vh;font-size:14px;line-height:1.5}
+
+/* ══ LOADING ══ */
+#loadingScreen{position:fixed;inset:0;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;transition:opacity .4s}
+#loadingScreen.hide{opacity:0;pointer-events:none}
+.ld-logo{width:56px;height:56px;background:linear-gradient(135deg,var(--green),#065f46);border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(22,163,74,.3)}
+.ld-logo svg{width:28px;height:28px;fill:white}
+.ld-txt{font-size:15px;color:var(--gray-500)}
+.spinner{width:28px;height:28px;border:3px solid var(--gray-200);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--gray-900);color:#fff;padding:11px 22px;border-radius:var(--r-md);font-size:13px;font-weight:500;z-index:9999;transition:transform .25s;white-space:nowrap;box-shadow:var(--sh-md)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#065f46}
+.toast.err{background:#991b1b}
+
+/* ══ HEADER ══ */
+.header{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--green),#065f46);border-radius:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(22,163,74,.25)}
+.logo-mark svg{width:20px;height:20px;fill:white}
+.logo-name{font-size:17px;font-weight:700;letter-spacing:-.4px}
+.logo-tag{font-size:11px;color:var(--gray-400);margin-top:-2px}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.save-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-400);padding:4px 10px;border-radius:20px;transition:all .3s}
+.save-chip.saving{color:var(--amber);background:var(--amber-l)}
+.save-chip.saved{color:var(--green);background:var(--green-l)}
+.save-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.btn-hdr{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:8px 14px;font-size:13px;font-weight:500;color:var(--gray-600);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit}
+.btn-hdr:hover{background:var(--gray-100)}
+.btn-primary{background:linear-gradient(135deg,var(--green),#059669);color:white;border:none;border-radius:var(--r-md);padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(22,163,74,.25);transition:opacity .15s;font-family:inherit}
+.btn-primary:hover{opacity:.9}
+
+/* ══ NAV ══ */
+.nav{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-item{padding:0 2px;cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;font-size:13px;font-weight:500;color:var(--gray-500);transition:all .15s;display:flex;align-items:center;gap:8px;height:48px}
+.nav-item:hover{color:var(--gray-900)}
+.nav-item.active{color:var(--green);border-bottom-color:var(--green)}
+.nav-item .nav-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--gray-100)}
+.nav-item.active .nav-icon{background:var(--green-l)}
+.nav-sep{width:1px;background:var(--gray-200);margin:12px 8px}
+
+/* ══ PAGE ══ */
+.page{display:none}
+.page.show{display:block}
+
+/* ══ DASHBOARD HOME ══ */
+.dash-hero{background:linear-gradient(135deg,#0f4c30 0%,#16a34a 60%,#22c55e 100%);padding:40px 24px;color:white;text-align:center}
+.dash-title{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.dash-sub{font-size:15px;opacity:.8}
+.dash-main{max-width:1100px;margin:0 auto;padding:28px 24px}
+
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:32px}
+.module-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-xl);padding:0;overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+.module-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.module-card-top{padding:24px 24px 18px;display:flex;align-items:flex-start;gap:16px}
+.module-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.module-icon.green{background:var(--green-l)}
+.module-icon.blue{background:var(--blue-l)}
+.module-icon.purple{background:var(--purple-l)}
+.module-name{font-size:16px;font-weight:700;margin-bottom:4px}
+.module-desc{font-size:12px;color:var(--gray-500);line-height:1.5}
+.module-stats{padding:16px 24px;background:var(--gray-50);border-top:1px solid var(--gray-200);display:flex;gap:0}
+.mstat{flex:1;text-align:center;padding:0 8px}
+.mstat+.mstat{border-left:1px solid var(--gray-200)}
+.mstat-val{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.mstat-lbl{font-size:10px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.mstat-val.g{color:var(--green)}
+.mstat-val.a{color:var(--amber)}
+.mstat-val.r{color:var(--red)}
+.mstat-val.n{color:var(--gray-700)}
+.module-arrow{font-size:18px;color:var(--gray-300);margin-left:auto}
+.module-card:hover .module-arrow{color:var(--green)}
+
+.alert-section{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--sh)}
+.alert-sec-hdr{padding:18px 24px;border-bottom:1px solid var(--gray-200);font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.alert-list{padding:0}
+.alert-row{padding:14px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:14px;font-size:13px;transition:background .1s}
+.alert-row:hover{background:var(--gray-50)}
+.alert-row:last-child{border-bottom:none}
+.alert-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.alert-dot.r{background:var(--red)}
+.alert-dot.a{background:var(--amber)}
+.alert-dot.b{background:var(--blue)}
+.alert-dot.p{background:var(--purple)}
+.alert-info{flex:1}
+.alert-name{font-weight:600}
+.alert-meta{font-size:11px;color:var(--gray-400);margin-top:2px}
+.alert-days{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.alert-days.r{background:var(--red-l);color:#991b1b}
+.alert-days.a{background:var(--amber-l);color:#92400e}
+.alert-days.b{background:var(--blue-l);color:#1e3a8a}
+.alert-days.p{background:var(--purple-l);color:#4c1d95}
+.no-alerts{padding:32px 24px;text-align:center;color:var(--gray-400);font-size:14px}
+
+/* ══ SHARED MODULE STYLES ══ */
+.mod-wrap{max-width:1140px;margin:0 auto;padding:24px}
+
+/* Cawangan tabs */
+.caw-bar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.caw-bar::-webkit-scrollbar{display:none}
+.ctab{padding:13px 16px;font-size:13px;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:color .15s}
+.ctab:hover{color:var(--gray-900)}
+.ctab.active{color:var(--green);border-bottom-color:var(--green);font-weight:600}
+.ctab .cbadge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;font-size:10px;font-weight:700;margin-left:5px;background:var(--gray-100);color:var(--gray-500)}
+.ctab.active .cbadge{background:var(--green-l);color:var(--green-d)}
+.ctab .cbadge.warn{background:var(--amber-l);color:var(--amber)}
+.ctab .cbadge.danger{background:var(--red-l);color:var(--red)}
+
+/* Alert bar */
+.alert-bar{padding:10px 24px;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--amber-m);background:var(--amber-l);color:var(--amber);display:none}
+.alert-bar.show{display:flex}
+
+/* Stats */
+.stats-grid{display:grid;gap:12px;margin-bottom:24px}
+.stats-5{grid-template-columns:repeat(5,1fr)}
+.stats-4{grid-template-columns:repeat(4,1fr)}
+.stat-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:16px 20px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc-total::before{background:linear-gradient(90deg,var(--gray-300),var(--gray-400))}
+.sc-ok::before{background:linear-gradient(90deg,var(--green),#059669)}
+.sc-warn::before{background:linear-gradient(90deg,var(--amber),#f59e0b)}
+.sc-bad::before{background:linear-gradient(90deg,var(--red),#ef4444)}
+.sc-off::before{background:linear-gradient(90deg,var(--gray-400),var(--gray-500))}
+.sc-blue::before{background:linear-gradient(90deg,var(--blue),#3b82f6)}
+.sc-purple::before{background:linear-gradient(90deg,var(--purple),#8b5cf6)}
+.stat-lbl{font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;font-weight:600}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-.5px}
+.sv-n{color:var(--gray-700)}.sv-g{color:var(--green)}.sv-a{color:var(--amber)}.sv-r{color:var(--red)}.sv-d{color:var(--gray-400)}.sv-b{color:var(--blue)}.sv-p{color:var(--purple)}
+
+/* Toolbar */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.sw{position:relative;flex:1;min-width:200px}
+.sw-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:14px;pointer-events:none}
+.si{width:100%;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:9px 12px 9px 34px;font-size:13px;color:var(--gray-900);outline:none;font-family:inherit}
+.si:focus{border-color:var(--green)}
+.sf{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:9px 12px;font-size:13px;color:var(--gray-900);outline:none;cursor:pointer;font-family:inherit;min-width:150px}
+.sf:focus{border-color:var(--green)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{background:var(--white);border:1px solid var(--gray-200);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;color:var(--gray-500);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.pill:hover{border-color:var(--gray-400);color:var(--gray-900)}
+.pill.on{background:var(--green-l);border-color:var(--green);color:var(--green-d)}
+.pill.on-a{background:var(--amber-l);border-color:var(--amber);color:#92400e}
+.pill.on-r{background:var(--red-l);border-color:var(--red);color:#991b1b}
+.pill.on-gray{background:var(--gray-100);border-color:var(--gray-400);color:var(--gray-700)}
+.pill.on-b{background:var(--blue-l);border-color:var(--blue);color:#1e3a8a}
+.pill.on-p{background:var(--purple-l);border-color:var(--purple);color:#4c1d95}
+
+/* Table */
+.tbl-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+th{padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+td{padding:13px 16px;border-top:1px solid var(--gray-100);vertical-align:middle}
+tbody tr{transition:background .1s}
+tbody tr:hover td{background:var(--gray-50)}
+tbody tr.row-off td{opacity:.5}
+
+/* Badges / status pills */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b-haiwan{background:#fef2f2;color:#991b1b}.b-tumbuhan{background:#f0fdf4;color:#14532d}
+.b-kimia{background:var(--blue-l);color:#1e3a8a}.b-lain{background:var(--gray-100);color:var(--gray-600)}
+.caw-tag{background:var(--gray-100);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--gray-600);font-weight:500}
+.sp{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.sp-ok{background:var(--green-l);color:var(--green-d)}
+.sp-warn{background:var(--amber-l);color:#92400e}
+.sp-bad{background:var(--red-l);color:#991b1b}
+.sp-off{background:var(--gray-100);color:var(--gray-500)}
+.sp-blue{background:var(--blue-l);color:#1e3a8a}
+.sp-purple{background:var(--purple-l);color:#4c1d95}
+.sdot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+.sd-ok{background:var(--green)}.sd-warn{background:var(--amber)}.sd-bad{background:var(--red)}.sd-off{background:var(--gray-400)}.sd-blue{background:var(--blue)}.sd-purple{background:var(--purple)}
+
+.dt{font-size:13px;font-weight:500}
+.dl{font-size:11px;color:var(--gray-400);margin-top:2px}
+.dl.warn{color:var(--amber);font-weight:600}.dl.danger{color:var(--red);font-weight:600}
+
+.act-btns{display:flex;gap:4px;flex-wrap:wrap}
+.ab{border:1px solid var(--gray-200);background:var(--white);border-radius:var(--r-sm);padding:5px 9px;cursor:pointer;font-size:12px;color:var(--gray-600);transition:all .15s;white-space:nowrap;font-family:inherit;font-weight:500}
+.ab:hover{background:var(--gray-100)}
+.ab.v{color:var(--blue);border-color:var(--blue-m)}.ab.v:hover{background:var(--blue-l)}
+.ab.e{color:var(--green-d);border-color:var(--green-m)}.ab.e:hover{background:var(--green-l)}
+.ab.d{color:var(--red);border-color:var(--red-m)}.ab.d:hover{background:var(--red-l)}
+
+.empty-state{text-align:center;padding:60px 24px;color:var(--gray-400)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+
+/* Toggle */
+.tgl-wrap{display:flex;align-items:center;gap:7px}
+.tgl{position:relative;width:36px;height:20px;flex-shrink:0}
+.tgl input{opacity:0;width:0;height:0;position:absolute}
+.tgl-sl{position:absolute;inset:0;border-radius:10px;background:var(--gray-200);cursor:pointer;transition:background .2s}
+.tgl-sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;border-radius:50%;background:white;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tgl input:checked+.tgl-sl{background:var(--green)}
+.tgl input:checked+.tgl-sl::before{transform:translateX(16px)}
+.tgl-lbl{font-size:12px;color:var(--gray-500);white-space:nowrap}
+
+/* Bahan name */
+.nm{font-weight:600;font-size:14px}.nm.off{color:var(--gray-400);text-decoration:line-through}
+.nm-sci{font-style:italic;font-size:11px;color:var(--gray-400);margin-top:1px}
+.nm-meta{font-size:11px;color:var(--gray-400);margin-top:2px}
+.nm-remark{font-size:11px;color:var(--amber);margin-top:3px;font-style:italic}
+
+/* Staff name */
+.staff-nm{font-weight:600;font-size:14px}
+.staff-pos{font-size:11px;color:var(--gray-400);margin-top:2px}
+
+/* ══ MODAL ══ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--r-xl);width:100%;max-width:580px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:up .2s ease}
+.modal-sm{max-width:460px}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.mhdr{padding:22px 26px 18px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1;border-radius:var(--r-xl) var(--r-xl) 0 0}
+.mhdr h2{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.mbody{padding:22px 26px}
+.mftr{padding:16px 26px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:var(--white);border-radius:0 0 var(--r-xl) var(--r-xl)}
+.xbtn{background:var(--gray-100);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--gray-500);font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
+.xbtn:hover{background:var(--gray-200);color:var(--gray-900)}
+.sec{font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:8px}
+.sec:first-child{margin-top:0}
+.sec::before{content:'';width:3px;height:13px;border-radius:2px;background:var(--green);flex-shrink:0}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.fgrp{margin-bottom:14px}
+.flbl{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:5px}
+.flbl span{color:var(--red)}
+.fctrl{width:100%;background:var(--white);border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:10px 12px;font-size:14px;color:var(--gray-900);outline:none;font-family:inherit;transition:all .15s}
+.fctrl:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.08)}
+.ftgl-row{display:flex;align-items:center;justify-content:space-between;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px 16px;margin-bottom:14px}
+.ftgl-info{font-size:14px;font-weight:500}
+.ftgl-sub{font-size:12px;color:var(--gray-400);margin-top:2px}
+.upload-zone{border:2px dashed var(--gray-200);border-radius:var(--r-md);padding:22px;text-align:center;cursor:pointer;transition:all .15s}
+.upload-zone:hover,.upload-zone.has-file{border-color:var(--green);background:var(--green-l)}
+.uz-icon{font-size:28px;margin-bottom:8px}
+.uz-lbl{font-size:13px;color:var(--gray-500)}
+.uz-lbl strong{color:var(--green)}
+.uz-hint{font-size:11px;color:var(--gray-400);margin-top:4px}
+.bcl{background:var(--white);border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:9px 20px;font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;font-family:inherit}
+.bcl:hover{background:var(--gray-100)}
+.bsv{background:linear-gradient(135deg,var(--green),#059669);color:white;border:none;border-radius:var(--r-md);padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(22,163,74,.25)}
+.bsv:hover{opacity:.9}
+
+/* Cawangan modal */
+.caw-modal{background:var(--white);border-radius:var(--r-xl);width:100%;max-width:460px;max-height:88vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:up .2s ease}
+.caw-row{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--gray-100);transition:background .1s}
+.caw-row:last-child{border-bottom:none}
+.caw-row:hover{background:var(--gray-50)}
+.caw-inp{flex:1;border:1.5px solid transparent;border-radius:var(--r-sm);padding:7px 10px;font-size:14px;color:var(--gray-900);background:transparent;outline:none;font-family:inherit;transition:all .15s}
+.caw-inp:focus{border-color:var(--green);background:var(--white)}
+.caw-inp:hover:not(:focus){border-color:var(--gray-200);background:var(--white)}
+.caw-cnt{font-size:11px;color:var(--gray-400);min-width:50px;text-align:right;font-weight:500}
+.caw-del{background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:18px;padding:2px 5px;border-radius:4px;transition:all .15s;line-height:1;font-family:inherit}
+.caw-del:hover{color:var(--red);background:var(--red-l)}
+.caw-add{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--gray-200);background:var(--gray-50)}
+.caw-add-inp{flex:1;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:9px 12px;font-size:14px;outline:none;font-family:inherit;background:var(--white)}
+.caw-add-inp:focus{border-color:var(--green)}
+.caw-add-btn{background:var(--green);color:white;border:none;border-radius:var(--r-md);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.caw-add-btn:hover{background:var(--green-d)}
+.caw-info{padding:12px 20px;background:var(--blue-l);border-bottom:1px solid var(--blue-m);font-size:12px;color:var(--blue);display:flex;gap:8px}
+
+/* Viewer */
+.view-modal{background:var(--white);border-radius:var(--r-xl);width:100%;max-width:700px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:up .2s ease}
+.vhdr{padding:18px 24px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between}
+.vhdr h3{font-size:15px;font-weight:600}
+.vbody{flex:1;overflow:auto;padding:16px;min-height:400px}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:900px){.stats-5,.stats-4{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){
+  .header,.nav,.caw-bar,.mod-wrap,.dash-main{padding-left:16px;padding-right:16px}
+  .stats-5,.stats-4{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat-val{font-size:24px}
+  .frow{grid-template-columns:1fr}
+  th:nth-child(3),td:nth-child(3){display:none}
+  .module-grid{grid-template-columns:1fr}
+  .logo-tag{display:none}
+  .dash-title{font-size:22px}
+  .nav{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loadingScreen">
+  <div class="ld-logo"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+  <div class="spinner"></div>
+  <div class="ld-txt">Memuatkan HalalTrack...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ══ HEADER ══ -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+    <div>
+      <div class="logo-name">SY HalalTrack</div>
+      <div class="logo-tag">Sistem Pengurusan Halal</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="save-chip" id="saveChip" style="display:none"><div class="save-dot"></div><span id="saveTxt">Tersimpan</span></div>
+    <div id="adminBadge" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--green);background:var(--green-l);padding:4px 12px;border-radius:20px;font-weight:600">🔐 Admin</div>
+    <button class="btn-hdr" id="btnExport" onclick="openExport()" style="display:none">⬇ Export Data</button>
+    <button class="btn-hdr" id="btnCaw" onclick="openCawMgr()" style="display:none">⚙ Cawangan</button>
+    <button class="btn-primary" id="btnAdd" onclick="handleAdd()" style="display:none">＋ Tambah</button>
+    <button class="btn-hdr" id="btnLogin" onclick="openLoginModal()">🔐 Log Masuk Admin</button>
+    <button class="btn-hdr" id="btnLogout" onclick="adminLogout()" style="display:none">Keluar</button>
+  </div>
+</header>
+
+<!-- ══ NAVIGATION ══ -->
+<nav class="nav">
+  <div class="nav-item active" id="nav-home" onclick="goPage('home')">
+    <span class="nav-icon">🏠</span> Dashboard
+  </div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" id="nav-bahan" onclick="goPage('bahan')">
+    <span class="nav-icon">🛡</span> Bahan Mentah Halal
+  </div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" id="nav-training" onclick="goPage('training')">
+    <span class="nav-icon">📚</span> Halal Training
+  </div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" id="nav-typhoid" onclick="goPage('typhoid')">
+    <span class="nav-icon">💉</span> Suntikan Typhoid
+  </div>
+</nav>
+
+<!-- ══ EXPORT REMINDER BAR ══ -->
+<div id="exportReminderBar" style="display:none;background:#fef3c7;border-bottom:1px solid #fde68a;padding:10px 24px;font-size:13px;color:#92400e;align-items:center;gap:12px">
+  ⚠️ <strong>Perubahan belum disimpan ke GitHub.</strong> Klik "Export Data" → download data.json → upload ke GitHub repo anda supaya perubahan kekal.
+  <button onclick="openExport()" style="background:#d97706;color:white;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600">⬇ Export Sekarang</button>
+  <button onclick="document.getElementById('exportReminderBar').style.display='none'" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#92400e;font-size:18px">×</button>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: DASHBOARD HOME
+══════════════════════════════════ -->
+<div class="page show" id="page-home">
+  <div class="dash-hero">
+    <div class="dash-title">Selamat Datang ke SY HalalTrack</div>
+    <div class="dash-sub">Sistem pengurusan sijil halal, latihan, dan kesihatan staf</div>
+  </div>
+  <div class="dash-main">
+    <div class="module-grid" id="moduleGrid"></div>
+    <div class="alert-section">
+      <div class="alert-sec-hdr">⚠️ Memerlukan Perhatian Segera</div>
+      <div id="alertList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: BAHAN MENTAH
+══════════════════════════════════ -->
+<div class="page" id="page-bahan">
+  <div class="alert-bar" id="bahan-alertBar">⚠️ <span id="bahan-alertMsg"></span></div>
+  <nav class="caw-bar" id="bahan-cawBar"></nav>
+  <div class="mod-wrap">
+    <div class="stats-grid stats-5" id="bahan-stats"></div>
+    <div class="toolbar">
+      <div class="sw"><span class="sw-icon">🔍</span><input class="si" id="bahan-search" placeholder="Cari bahan, pengilang, sijil..." oninput="renderBahan()"></div>
+      <select class="sf" id="bahan-katFilter" onchange="renderBahan()">
+        <option value="">Semua Kategori</option>
+        <option value="haiwan">🐄 Haiwan</option>
+        <option value="tumbuhan">🌿 Tumbuhan</option>
+        <option value="kimia">⚗️ Kimia</option>
+        <option value="lain">📦 Lain-lain</option>
+      </select>
+      <div class="pills">
+        <button class="pill on" id="bf-all"     onclick="setBahanFlt('')">Semua</button>
+        <button class="pill"    id="bf-aktif"   onclick="setBahanFlt('aktif')">✅ Aktif</button>
+        <button class="pill"    id="bf-hampir"  onclick="setBahanFlt('hampir')">⚠ Hampir Luput</button>
+        <button class="pill"    id="bf-luput"   onclick="setBahanFlt('luput')">❌ Luput</button>
+        <button class="pill"    id="bf-nonaktif" onclick="setBahanFlt('nonaktif')">⏸ Tidak Aktif</button>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <table><thead><tr>
+        <th>Bahan Mentah</th><th>Kategori</th><th>Cawangan</th>
+        <th>Sijil Halal</th><th>Tarikh Luput</th><th>Status</th><th>Tindakan</th>
+      </tr></thead>
+      <tbody id="bahan-tbody"></tbody></table>
+      <div class="empty-state" id="bahan-empty" style="display:none"><div class="empty-icon">📋</div><p>Tiada rekod.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: HALAL TRAINING
+══════════════════════════════════ -->
+<div class="page" id="page-training">
+  <div class="alert-bar" id="tr-alertBar">⚠️ <span id="tr-alertMsg"></span></div>
+  <nav class="caw-bar" id="tr-cawBar"></nav>
+  <div class="mod-wrap">
+    <div class="stats-grid stats-4" id="tr-stats"></div>
+    <div class="toolbar">
+      <div class="sw"><span class="sw-icon">🔍</span><input class="si" id="tr-search" placeholder="Cari nama staf, jawatan..." oninput="renderTraining()"></div>
+      <select class="sf" id="tr-filter" onchange="renderTraining()">
+        <option value="">Semua Status</option>
+        <option value="hadir">✅ Telah Hadir</option>
+        <option value="belum">⏳ Belum Hadir</option>
+        <option value="hampir">⚠ Hampir Tamat</option>
+        <option value="luput">❌ Tamat Tempoh</option>
+      </select>
+    </div>
+    <div class="tbl-card">
+      <table><thead><tr>
+        <th>Nama Staf</th><th>Cawangan</th>
+        <th>Tarikh Training</th><th>Tarikh Tamat</th><th>Status</th><th>Tindakan</th>
+      </tr></thead>
+      <tbody id="tr-tbody"></tbody></table>
+      <div class="empty-state" id="tr-empty" style="display:none"><div class="empty-icon">📚</div><p>Tiada rekod training.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: SUNTIKAN TYPHOID
+══════════════════════════════════ -->
+<div class="page" id="page-typhoid">
+  <div class="alert-bar" id="ty-alertBar">⚠️ <span id="ty-alertMsg"></span></div>
+  <nav class="caw-bar" id="ty-cawBar"></nav>
+  <div class="mod-wrap">
+    <div class="stats-grid stats-4" id="ty-stats"></div>
+    <div class="toolbar">
+      <div class="sw"><span class="sw-icon">🔍</span><input class="si" id="ty-search" placeholder="Cari nama staf, jawatan..." oninput="renderTyphoid()"></div>
+      <select class="sf" id="ty-filter" onchange="renderTyphoid()">
+        <option value="">Semua Status</option>
+        <option value="aktif">✅ Aktif</option>
+        <option value="belum">⏳ Belum Suntik</option>
+        <option value="hampir">⚠ Hampir Tamat</option>
+        <option value="luput">❌ Tamat Tempoh</option>
+      </select>
+    </div>
+    <div class="tbl-card">
+      <table><thead><tr>
+        <th>Nama Staf</th><th>Cawangan</th>
+        <th>Tarikh Suntikan</th><th>Tarikh Tamat</th><th>Status</th><th>Tindakan</th>
+      </tr></thead>
+      <tbody id="ty-tbody"></tbody></table>
+      <div class="empty-state" id="ty-empty" style="display:none"><div class="empty-icon">💉</div><p>Tiada rekod suntikan.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: BAHAN MENTAH ══ -->
+<div class="overlay" id="bahanModal" onclick="if(event.target===this)closeMod('bahanModal')">
+  <div class="modal">
+    <div class="mhdr"><h2 id="bahanModalTitle">Tambah Bahan Mentah</h2><button class="xbtn" onclick="closeMod('bahanModal')">×</button></div>
+    <div class="mbody">
+      <div class="ftgl-row">
+        <div><div class="ftgl-info">Status Penggunaan</div><div class="ftgl-sub" id="bahanAktifSub">Bahan sedang digunakan</div></div>
+        <label class="tgl tgl-lg" style="width:44px;height:24px"><input type="checkbox" id="bahanAktif" checked onchange="updateBahanAktifLbl()"><div class="tgl-sl"></div></label>
+      </div>
+      <div class="sec">Maklumat Bahan</div>
+      <div class="fgrp"><label class="flbl">Nama Bahan Mentah <span>*</span></label><input class="fctrl" id="bNama" placeholder="cth: Lemak Haiwan"/></div>
+      <div class="fgrp"><label class="flbl">Nama Saintifik</label><input class="fctrl" id="bSaintifik" placeholder="cth: Bos taurus" style="font-style:italic"/></div>
+      <div class="frow">
+        <div class="fgrp" style="margin:0"><label class="flbl">Kategori <span>*</span></label>
+          <select class="fctrl" id="bKat"><option value="haiwan">🐄 Haiwan</option><option value="tumbuhan">🌿 Tumbuhan</option><option value="kimia">⚗️ Kimia</option><option value="lain">📦 Lain-lain</option></select>
+        </div>
+        <div class="fgrp" style="margin:0"><label class="flbl">Cawangan <span>*</span></label><select class="fctrl" id="bCaw"></select></div>
+      </div>
+      <div class="sec">Maklumat Pengilang</div>
+      <div class="fgrp"><label class="flbl">Nama Pengilang <span>*</span></label><input class="fctrl" id="bPengilang" placeholder="Nama syarikat pengilang"/></div>
+      <div class="fgrp"><label class="flbl">Alamat Pengilang</label><textarea class="fctrl" id="bAlamat" rows="2" placeholder="Alamat penuh pengilang..."></textarea></div>
+      <div class="sec">Maklumat Sijil Halal</div>
+      <div class="fgrp"><label class="flbl">Sijil Halal Daripada <span>*</span></label><input class="fctrl" id="bBadan" placeholder="cth: JAKIM, MUI, ESMA..."/></div>
+      <div class="fgrp"><label class="flbl">No. Rujukan Sijil <span>*</span></label><input class="fctrl" id="bSijil" placeholder="cth: MS1500:2019/B-001"/></div>
+      <div class="frow">
+        <div class="fgrp" style="margin:0"><label class="flbl">Tarikh Mula</label><input class="fctrl" type="date" id="bMula"/></div>
+        <div class="fgrp" style="margin:0"><label class="flbl">Tarikh Luput <span>*</span></label><input class="fctrl" type="date" id="bLuput"/></div>
+      </div>
+      <div class="sec">Dokumen & Remark</div>
+      <div class="upload-zone" id="bahanUpload" onclick="document.getElementById('bahanFile').click()">
+        <div class="uz-icon">📄</div><div class="uz-lbl" id="bahanUploadLbl"><strong>Klik muat naik sijil</strong> atau seret ke sini</div>
+        <div class="uz-hint">PDF, JPG, PNG — maks 10MB</div>
+      </div>
+      <input type="file" id="bahanFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleBahanFile(event)"/>
+      <div class="fgrp" style="margin-top:12px"><label class="flbl">Remark</label><textarea class="fctrl" id="bNota" rows="2" placeholder="Catatan atau maklumat tambahan..."></textarea></div>
+    </div>
+    <div class="mftr"><button class="bcl" onclick="closeMod('bahanModal')">Batal</button><button class="bsv" onclick="saveBahan()">💾 Simpan</button></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: TRAINING ══ -->
+<div class="overlay" id="trModal" onclick="if(event.target===this)closeMod('trModal')">
+  <div class="modal modal-sm">
+    <div class="mhdr"><h2 id="trModalTitle">Tambah Rekod Training</h2><button class="xbtn" onclick="closeMod('trModal')">×</button></div>
+    <div class="mbody">
+      <div class="sec">Maklumat Staf</div>
+      <div class="fgrp"><label class="flbl">Nama Staf <span>*</span></label><input class="fctrl" id="tNama" placeholder="Nama penuh staf"/></div>
+      <div class="fgrp"><label class="flbl">Jawatan / Bahagian</label><input class="fctrl" id="tJawatan" placeholder="cth: Pengurus Halal, QC Officer..."/></div>
+      <div class="fgrp"><label class="flbl">Cawangan <span>*</span></label><select class="fctrl" id="tCaw"></select></div>
+      <div class="sec">Maklumat Training</div>
+      <div class="fgrp">
+        <label class="flbl">Status Penyertaan</label>
+        <select class="fctrl" id="tStatus">
+          <option value="belum">⏳ Belum Hadir</option>
+          <option value="hadir">✅ Telah Hadir</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="fgrp" style="margin:0"><label class="flbl">Tarikh Training</label><input class="fctrl" type="date" id="tTarikh"/></div>
+        <div class="fgrp" style="margin:0"><label class="flbl">Tarikh Tamat / Renewal</label><input class="fctrl" type="date" id="tTamat"/></div>
+      </div>
+      <div class="fgrp"><label class="flbl">Remark</label><textarea class="fctrl" id="tNota" rows="2" placeholder="Catatan..."></textarea></div>
+    </div>
+    <div class="mftr"><button class="bcl" onclick="closeMod('trModal')">Batal</button><button class="bsv" onclick="saveTraining()">💾 Simpan</button></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: TYPHOID ══ -->
+<div class="overlay" id="tyModal" onclick="if(event.target===this)closeMod('tyModal')">
+  <div class="modal modal-sm">
+    <div class="mhdr"><h2 id="tyModalTitle">Tambah Rekod Suntikan</h2><button class="xbtn" onclick="closeMod('tyModal')">×</button></div>
+    <div class="mbody">
+      <div class="sec">Maklumat Staf</div>
+      <div class="fgrp"><label class="flbl">Nama Staf <span>*</span></label><input class="fctrl" id="yNama" placeholder="Nama penuh staf"/></div>
+      <div class="fgrp"><label class="flbl">Jawatan / Bahagian</label><input class="fctrl" id="yJawatan" placeholder="cth: Food Handler, Operator..."/></div>
+      <div class="fgrp"><label class="flbl">Cawangan <span>*</span></label><select class="fctrl" id="yCaw"></select></div>
+      <div class="sec">Maklumat Suntikan Typhoid</div>
+      <div class="fgrp">
+        <label class="flbl">Status Suntikan</label>
+        <select class="fctrl" id="yStatus">
+          <option value="belum">⏳ Belum Suntik</option>
+          <option value="aktif">✅ Sudah Suntik</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="fgrp" style="margin:0"><label class="flbl">Tarikh Suntikan</label><input class="fctrl" type="date" id="yTarikh"/></div>
+        <div class="fgrp" style="margin:0"><label class="flbl">Tarikh Tamat <span>*</span></label><input class="fctrl" type="date" id="yTamat"/></div>
+      </div>
+      <div class="fgrp"><label class="flbl">Klinik / Hospital</label><input class="fctrl" id="yKlinik" placeholder="Nama klinik atau hospital"/></div>
+      <div class="fgrp"><label class="flbl">Remark</label><textarea class="fctrl" id="yNota" rows="2" placeholder="Catatan..."></textarea></div>
+    </div>
+    <div class="mftr"><button class="bcl" onclick="closeMod('tyModal')">Batal</button><button class="bsv" onclick="saveTyphoid()">💾 Simpan</button></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: CAWANGAN ══ -->
+<div class="overlay" id="cawModal" onclick="if(event.target===this)closeMod('cawModal')">
+  <div class="caw-modal">
+    <div class="mhdr"><h2>⚙ Urus Cawangan</h2><button class="xbtn" onclick="closeMod('cawModal')">×</button></div>
+    <div class="caw-info">ℹ️ Klik nama cawangan untuk edit. Simpan automatik apabila klik di luar.</div>
+    <div id="cawList"></div>
+    <div class="caw-add"><input class="caw-add-inp" id="newCawInp" placeholder="Nama cawangan baru..." onkeydown="if(event.key==='Enter')addCaw()"/><button class="caw-add-btn" onclick="addCaw()">＋ Tambah</button></div>
+    <div class="mftr" style="justify-content:space-between"><span style="font-size:12px;color:var(--gray-400)">Perubahan disimpan automatik</span><button class="bsv" onclick="closeMod('cawModal');renderAll()">Selesai</button></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: VIEW SIJIL ══ -->
+<div class="overlay" id="viewModal" onclick="if(event.target===this)closeMod('viewModal')">
+  <div class="view-modal">
+    <div class="vhdr"><h3 id="viewTitle">Sijil Halal</h3><button class="xbtn" onclick="closeMod('viewModal')">×</button></div>
+    <div class="vbody" id="viewBody"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: ADMIN LOGIN ══ -->
+<div class="overlay" id="loginModal" onclick="if(event.target===this)closeMod('loginModal')">
+  <div class="modal modal-sm">
+    <div class="mhdr"><h2>🔐 Log Masuk Admin</h2><button class="xbtn" onclick="closeMod('loginModal')">×</button></div>
+    <div class="mbody">
+      <div style="background:var(--blue-l);border:1px solid var(--blue-m);border-radius:var(--r-md);padding:12px 16px;font-size:13px;color:#1e3a8a;margin-bottom:20px">
+        ℹ️ Hanya admin yang boleh tambah, edit, atau padam rekod.
+      </div>
+      <div class="fgrp"><label class="flbl">Kata Laluan Admin</label>
+        <input class="fctrl" type="password" id="adminPwInput" placeholder="Masukkan kata laluan..." onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div id="loginErr" style="display:none;color:var(--red);font-size:13px;margin-top:8px">❌ Kata laluan salah. Cuba lagi.</div>
+    </div>
+    <div class="mftr"><button class="bcl" onclick="closeMod('loginModal')">Batal</button><button class="bsv" onclick="doLogin()">Log Masuk</button></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EXPORT DATA ══ -->
+<div class="overlay" id="exportModal" onclick="if(event.target===this)closeMod('exportModal')">
+  <div class="modal">
+    <div class="mhdr"><h2>💾 Export Data (JSON)</h2><button class="xbtn" onclick="closeMod('exportModal')">×</button></div>
+    <div class="mbody">
+      <div style="background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--r-md);padding:12px 16px;font-size:13px;color:var(--green-d);margin-bottom:16px">
+        ✅ Selepas buat perubahan, export JSON ini dan upload semula ke GitHub sebagai <strong>data.json</strong> untuk simpan secara kekal.
+      </div>
+      <textarea id="exportArea" style="width:100%;height:300px;font-family:monospace;font-size:11px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;resize:vertical;outline:none;background:var(--gray-50)" readonly></textarea>
+    </div>
+    <div class="mftr">
+      <button class="bcl" onclick="closeMod('exportModal')">Tutup</button>
+      <button class="bsv" onclick="copyExport()">📋 Copy JSON</button>
+      <button class="bsv" style="background:linear-gradient(135deg,var(--blue),#3b82f6);border:none" onclick="downloadExport()">⬇ Download data.json</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIG — TUKAR NILAI INI
+═══════════════════════════════════════════════ */
+// ⚠️ WAJIB TUKAR: nama GitHub anda dan nama repo
+const GITHUB_USER = 'YOUR_GITHUB_USERNAME';   // cth: 'ahmadhalal'
+const GITHUB_REPO = 'YOUR_REPO_NAME';         // cth: 'sy-halaltrack'
+// Kata laluan admin (boleh tukar kepada mana-mana kata laluan)
+const ADMIN_PASSWORD = 'admin123';
+
+const WARN_BAHAN  = 90;
+const WARN_TR     = 60;
+const WARN_TY     = 60;
+
+/* ═══════════════════════════════════════════════
+   ADMIN AUTH
+═══════════════════════════════════════════════ */
+let isAdmin = false;
+
+function openLoginModal() { document.getElementById('adminPwInput').value=''; document.getElementById('loginErr').style.display='none'; openMod('loginModal'); setTimeout(()=>document.getElementById('adminPwInput').focus(),100); }
+function doLogin() {
+  const pw = document.getElementById('adminPwInput').value;
+  if(pw === ADMIN_PASSWORD) {
+    isAdmin = true; closeMod('loginModal');
+    document.getElementById('btnLogin').style.display='none';
+    document.getElementById('btnLogout').style.display='flex';
+    document.getElementById('adminBadge').style.display='flex';
+    document.getElementById('btnCaw').style.display='flex';
+    document.getElementById('btnExport').style.display='flex';
+    document.getElementById('saveChip').style.display='flex';
+    if(activePage!=='home') document.getElementById('btnAdd').style.display='flex';
+    renderAll(); renderDashboard();
+    toast('✅ Selamat datang, Admin!','ok');
+  } else {
+    document.getElementById('loginErr').style.display='block';
+  }
+}
+function adminLogout() {
+  isAdmin = false;
+  document.getElementById('btnLogin').style.display='flex';
+  document.getElementById('btnLogout').style.display='none';
+  document.getElementById('adminBadge').style.display='none';
+  document.getElementById('btnCaw').style.display='none';
+  document.getElementById('btnExport').style.display='none';
+  document.getElementById('btnAdd').style.display='none';
+  document.getElementById('saveChip').style.display='none';
+  renderAll(); renderDashboard();
+  toast('Anda telah log keluar.');
+}
+
+/* ═══════════════════════════════════════════════
+   EXPORT / DOWNLOAD DATA
+═══════════════════════════════════════════════ */
+function openExport() {
+  const json = JSON.stringify({cawangan:CAWANGAN, bahan:DB.bahan, training:DB.training, typhoid:DB.typhoid}, null, 2);
+  document.getElementById('exportArea').value = json;
+  openMod('exportModal');
+}
+function copyExport() { document.getElementById('exportArea').select(); document.execCommand('copy'); toast('JSON disalin ✓','ok'); }
+function downloadExport() {
+  const json = JSON.stringify({cawangan:CAWANGAN, bahan:DB.bahan, training:DB.training, typhoid:DB.typhoid}, null, 2);
+  const a = document.createElement('a'); a.href='data:application/json,'+encodeURIComponent(json); a.download='data.json'; a.click();
+  toast('data.json didownload ✓','ok');
+}
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let DB = { bahan:[], training:[], typhoid:[] };
+let CAWANGAN = [];
+let activePage = 'home';
+let activeCaw  = { bahan:'semua', training:'semua', typhoid:'semua' };
+let statusFlt  = { bahan:'', training:'', typhoid:'' };
+let editing    = { bahan:null, training:null, typhoid:null };
+let bahanFileData = null;
+let saveTimer = null;
+
+/* ═══════════════════════════════════════════════
+   LOAD FROM GITHUB / SAVE TO LOCALSTORAGE
+═══════════════════════════════════════════════ */
+const SK_LOCAL = 'sy-ht_localedits_v1';
+
+async function loadAll() {
+  // Cuba load dari GitHub data.json
+  try {
+    const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data.json?_=${Date.now()}`;
+    const res = await fetch(url);
+    if(res.ok) {
+      const d = await res.json();
+      CAWANGAN    = d.cawangan   || defaultCaw();
+      DB.bahan    = d.bahan      || [];
+      DB.training = d.training   || [];
+      DB.typhoid  = d.typhoid    || [];
+      // Merge perubahan local admin jika ada
+      const local = loadLocalEdits();
+      if(local && local._ts) { mergeLocalEdits(local); }
+      return;
+    }
+  } catch(e) { console.warn('GitHub fetch gagal, guna local/default:', e); }
+  // Fallback: guna local edits atau default
+  const local = loadLocalEdits();
+  if(local && local.bahan) {
+    CAWANGAN = local.cawangan || defaultCaw();
+    DB.bahan = local.bahan || []; DB.training = local.training || []; DB.typhoid = local.typhoid || [];
+  } else {
+    CAWANGAN = defaultCaw(); DB.bahan = sampleBahan(); DB.training = sampleTraining(); DB.typhoid = sampleTyphoid();
+  }
+}
+
+function loadLocalEdits() { try { const r=localStorage.getItem(SK_LOCAL); return r?JSON.parse(r):null; } catch { return null; } }
+function mergeLocalEdits(local) {
+  // Jika local lebih baru dari GitHub, guna local
+  CAWANGAN = local.cawangan || CAWANGAN;
+  DB.bahan = local.bahan || DB.bahan;
+  DB.training = local.training || DB.training;
+  DB.typhoid = local.typhoid || DB.typhoid;
+}
+
+function saveAll() {
+  if(!isAdmin) return;
+  setSave('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      // Simpan dalam localStorage dulu (sebagai backup)
+      localStorage.setItem(SK_LOCAL, JSON.stringify({_ts:Date.now(), cawangan:CAWANGAN, bahan:DB.bahan, training:DB.training, typhoid:DB.typhoid}));
+      setSave('saved');
+      // Tunjuk peringatan export
+      showExportReminder();
+    } catch(e) { setSave(''); toast('⚠️ Storan penuh!','err'); }
+  }, 400);
+}
+
+let exportReminderShown = false;
+function showExportReminder() {
+  if(exportReminderShown) return;
+  exportReminderShown = true;
+  const bar = document.getElementById('exportReminderBar');
+  if(bar) bar.style.display='flex';
+}
+
+function setSave(s) {
+  const el=document.getElementById('saveChip'), tx=document.getElementById('saveTxt');
+  el.className='save-chip';
+  if(s==='saving'){el.classList.add('saving');tx.textContent='Menyimpan...';}
+  else if(s==='saved'){el.classList.add('saved');tx.textContent='Tersimpan ✓';setTimeout(()=>{el.className='save-chip';tx.textContent='Tersimpan';},2000);}
+  else tx.textContent='Tersimpan';
+}
+
+// Auto-save interval (untuk admin sahaja)
+setInterval(()=>{ if(isAdmin) saveAll(); },30000);
+window.addEventListener('beforeunload',()=>{ if(isAdmin) { localStorage.setItem(SK_LOCAL, JSON.stringify({_ts:Date.now(),cawangan:CAWANGAN,bahan:DB.bahan,training:DB.training,typhoid:DB.typhoid})); } });
+
+/* ═══════════════════════════════════════════════
+   DEFAULT DATA
+═══════════════════════════════════════════════ */
+function defaultCaw() {
+  return [{id:'HQ',label:'HQ / Ibu Pejabat'},{id:'KL',label:'Kuala Lumpur'},{id:'SB',label:'Shah Alam'},{id:'JB',label:'Johor Bahru'},{id:'PG',label:'Pulau Pinang'},{id:'KK',label:'Kota Kinabalu'},{id:'KCH',label:'Kuching'}];
+}
+
+function sampleBahan() {
+  return [
+    {id:uid(),aktif:true, nama:'Lemak Haiwan (Bovine)',    saintifik:'Bos taurus (adipose tissue)',kat:'haiwan',  cawangan:'KL', pengilang:'Syarikat Daging Sdn Bhd',   alamat:'Lot 5, Jalan Industri 3, Ampang, Selangor', badan:'JAKIM',sijil:'MS1500:2019/B-001',mula:'2024-01-15',luput:'2025-01-14',nota:'',fail:null},
+    {id:uid(),aktif:true, nama:'Pewarna Semulajadi E160c', saintifik:'Capsicum annuum',           kat:'tumbuhan',cawangan:'KL', pengilang:'Natural Color Industries',   alamat:'Jalan Wawasan 4/2, Bangi',                  badan:'JAKIM',sijil:'MS1500:2019/T-015',mula:'2024-03-01',luput:'2026-06-30',nota:'',fail:null},
+    {id:uid(),aktif:false,nama:'Sodium Benzoate (E211)',   saintifik:'C₇H₅NaO₂',                kat:'kimia',   cawangan:'JB', pengilang:'Kimia Jaya Sdn Bhd',         alamat:'PLO 25, Pasir Gudang, Johor',               badan:'JAKIM',sijil:'MS1500:2019/K-022',mula:'2023-06-01',luput:'2025-05-31',nota:'Tidak digunakan',fail:null},
+    {id:uid(),aktif:true, nama:'Gelatin Sapi Halal',       saintifik:'Bos taurus (collagen)',     kat:'haiwan',  cawangan:'HQ', pengilang:'Halal Gelatin Corp',         alamat:'Shah Alam, Selangor',                       badan:'MUI Indonesia',sijil:'MS1500:2019/B-008',mula:'2024-02-10',luput:'2025-06-30',nota:'',fail:null},
+    {id:uid(),aktif:true, nama:'Ekstrak Vanila',           saintifik:'Vanilla tahitensis',        kat:'tumbuhan',cawangan:'PG', pengilang:'Vanilla Exports Ltd',        alamat:'French Polynesia',                          badan:'ESMA UAE',sijil:'MS1500:2019/T-031',mula:'2024-04-01',luput:'2027-03-31',nota:'',fail:null},
+  ];
+}
+
+function sampleTraining() {
+  return [
+    {id:uid(),nama:'Ahmad Faizal bin Razak',   jawatan:'Pengurus Halal',    cawangan:'KL', status:'hadir',tarikh:'2023-06-15',tamat:'2025-06-14',nota:''},
+    {id:uid(),nama:'Siti Aminah binti Hassan',  jawatan:'QC Officer',        cawangan:'KL', status:'hadir',tarikh:'2024-01-10',tamat:'2026-01-09',nota:''},
+    {id:uid(),nama:'Mohd Ridzuan bin Ismail',   jawatan:'Supervisor',        cawangan:'JB', status:'belum',tarikh:'',         tamat:'',         nota:'Jadual belum ditetapkan'},
+    {id:uid(),nama:'Nur Hafizah binti Kamal',   jawatan:'Halal Executive',   cawangan:'HQ', status:'hadir',tarikh:'2023-03-20',tamat:'2025-03-19',nota:''},
+    {id:uid(),nama:'Zulaikha binti Rahman',     jawatan:'Food Safety Officer',cawangan:'PG',status:'belum',tarikh:'',         tamat:'',         nota:''},
+    {id:uid(),nama:'Khairul Anwar bin Sulaiman',jawatan:'Plant Manager',     cawangan:'KK', status:'hadir',tarikh:'2024-05-01',tamat:'2026-04-30',nota:''},
+  ];
+}
+
+function sampleTyphoid() {
+  return [
+    {id:uid(),nama:'Ahmad Faizal bin Razak',   jawatan:'Pengurus Halal',    cawangan:'KL', status:'aktif',tarikh:'2023-08-10',tamat:'2025-08-09',klinik:'Klinik Kesihatan Ampang',nota:''},
+    {id:uid(),nama:'Siti Aminah binti Hassan',  jawatan:'QC Officer',        cawangan:'KL', status:'aktif',tarikh:'2024-02-15',tamat:'2026-02-14',klinik:'Klinik Panel ABC',nota:''},
+    {id:uid(),nama:'Mohd Ridzuan bin Ismail',   jawatan:'Supervisor',        cawangan:'JB', status:'belum',tarikh:'',         tamat:'',         klinik:'',nota:'Menunggu jadual'},
+    {id:uid(),nama:'Nur Hafizah binti Kamal',   jawatan:'Halal Executive',   cawangan:'HQ', status:'aktif',tarikh:'2023-06-01',tamat:'2025-05-31',klinik:'Hospital Selayang',nota:''},
+    {id:uid(),nama:'Zulaikha binti Rahman',     jawatan:'Food Safety Officer',cawangan:'PG',status:'belum',tarikh:'',         tamat:'',         klinik:'',nota:''},
+    {id:uid(),nama:'Khairul Anwar bin Sulaiman',jawatan:'Plant Manager',     cawangan:'KK', status:'aktif',tarikh:'2024-03-20',tamat:'2026-03-19',klinik:'Klinik Sabah Medical',nota:''},
+  ];
+}
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function daysLeft(d){ if(!d)return null; const t=new Date();t.setHours(0,0,0,0); const e=new Date(d);e.setHours(0,0,0,0); return Math.floor((e-t)/86400000); }
+function fmtDate(s){ if(!s)return'—'; return new Date(s).toLocaleDateString('ms-MY',{day:'2-digit',month:'short',year:'numeric'}); }
+function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function cawLabel(id){ return CAWANGAN.find(c=>c.id===id)?.label||id; }
+
+function bahanStatus(r) {
+  if(!r.aktif) return 'nonaktif';
+  const d=daysLeft(r.luput); if(d===null)return 'aktif';
+  if(d<0)return 'luput'; if(d<=WARN_BAHAN)return 'hampir'; return 'aktif';
+}
+function trStatus(r) {
+  if(r.status==='belum') return 'belum';
+  if(!r.tamat) return 'hadir';
+  const d=daysLeft(r.tamat); if(d<0)return 'luput'; if(d<=WARN_TR)return 'hampir'; return 'hadir';
+}
+function tyStatus(r) {
+  if(r.status==='belum') return 'belum';
+  if(!r.tamat) return 'aktif';
+  const d=daysLeft(r.tamat); if(d<0)return 'luput'; if(d<=WARN_TY)return 'hampir'; return 'aktif';
+}
+
+function statusPill(st) {
+  const m = {
+    aktif:    ['sp-ok','sd-ok','Aktif'],
+    hadir:    ['sp-ok','sd-ok','Telah Hadir'],
+    hampir:   ['sp-warn','sd-warn','Hampir Tamat'],
+    luput:    ['sp-bad','sd-bad','Tamat Tempoh'],
+    belum:    ['sp-blue','sd-blue','Belum Hadir'],
+    nonaktif: ['sp-off','sd-off','Tidak Aktif'],
+  };
+  const [sc,dc,lbl] = m[st]||['sp-off','sd-off',st];
+  return `<span class="sp ${sc}"><span class="sdot ${dc}"></span>${lbl}</span>`;
+}
+
+function katBadge(k){
+  const m={haiwan:['b-haiwan','🐄 Haiwan'],tumbuhan:['b-tumbuhan','🌿 Tumbuhan'],kimia:['b-kimia','⚗️ Kimia'],lain:['b-lain','📦 Lain-lain']};
+  const[cls,lbl]=m[k]||['b-lain',k];
+  return`<span class="badge ${cls}">${lbl}</span>`;
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function goPage(p) {
+  activePage = p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('show'));
+  document.getElementById('page-'+p).classList.add('show');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+p).classList.add('active');
+  const addLabels = {home:'',bahan:'Bahan Mentah',training:'Rekod Training',typhoid:'Rekod Suntikan'};
+  const btnAdd = document.getElementById('btnAdd');
+  if(p==='home'){ btnAdd.style.display='none'; }
+  else { btnAdd.style.display = isAdmin ? 'flex' : 'none'; btnAdd.textContent='＋ '+addLabels[p]; }
+  if(p!=='home') renderAll();
+  else renderDashboard();
+}
+
+function handleAdd() {
+  if(activePage==='bahan')    openBahanModal();
+  if(activePage==='training') openTrModal();
+  if(activePage==='typhoid')  openTyModal();
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER ALL
+═══════════════════════════════════════════════ */
+function renderAll() {
+  if(activePage==='bahan')    { renderBahanCawTabs(); renderBahanStats(); renderBahan(); }
+  if(activePage==='training') { renderTrCawTabs();    renderTrStats();    renderTraining(); }
+  if(activePage==='typhoid')  { renderTyCawTabs();    renderTyStats();    renderTyphoid(); }
+}
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════ */
+function renderDashboard() {
+  // Module stats
+  const ba = DB.bahan, tr = DB.training, ty = DB.typhoid;
+  const bAktif=ba.filter(r=>bahanStatus(r)==='aktif').length;
+  const bHampir=ba.filter(r=>bahanStatus(r)==='hampir').length;
+  const bLuput=ba.filter(r=>bahanStatus(r)==='luput').length;
+  const tHadir=tr.filter(r=>trStatus(r)==='hadir').length;
+  const tBelum=tr.filter(r=>trStatus(r)==='belum').length;
+  const tLuput=tr.filter(r=>['luput','hampir'].includes(trStatus(r))).length;
+  const yAktif=ty.filter(r=>tyStatus(r)==='aktif').length;
+  const yBelum=ty.filter(r=>tyStatus(r)==='belum').length;
+  const yLuput=ty.filter(r=>['luput','hampir'].includes(tyStatus(r))).length;
+
+  document.getElementById('moduleGrid').innerHTML = `
+    <div class="module-card" onclick="goPage('bahan')">
+      <div class="module-card-top">
+        <div class="module-icon green">🛡</div>
+        <div><div class="module-name">Bahan Mentah Halal</div><div class="module-desc">Pantau sijil halal, tarikh luput dan status bahan mentah di setiap cawangan</div></div>
+        <div class="module-arrow">→</div>
+      </div>
+      <div class="module-stats">
+        <div class="mstat"><div class="mstat-val n">${ba.length}</div><div class="mstat-lbl">Jumlah</div></div>
+        <div class="mstat"><div class="mstat-val g">${bAktif}</div><div class="mstat-lbl">Aktif</div></div>
+        <div class="mstat"><div class="mstat-val a">${bHampir}</div><div class="mstat-lbl">Hampir Luput</div></div>
+        <div class="mstat"><div class="mstat-val r">${bLuput}</div><div class="mstat-lbl">Luput</div></div>
+      </div>
+    </div>
+    <div class="module-card" onclick="goPage('training')">
+      <div class="module-card-top">
+        <div class="module-icon blue">📚</div>
+        <div><div class="module-name">Halal Training Awareness</div><div class="module-desc">Track staf yang telah dan belum menghadiri latihan halal awareness di semua cawangan</div></div>
+        <div class="module-arrow">→</div>
+      </div>
+      <div class="module-stats">
+        <div class="mstat"><div class="mstat-val n">${tr.length}</div><div class="mstat-lbl">Jumlah Staf</div></div>
+        <div class="mstat"><div class="mstat-val g">${tHadir}</div><div class="mstat-lbl">Telah Hadir</div></div>
+        <div class="mstat"><div class="mstat-val r">${tBelum}</div><div class="mstat-lbl">Belum Hadir</div></div>
+        <div class="mstat"><div class="mstat-val a">${tLuput}</div><div class="mstat-lbl">Perlu Renew</div></div>
+      </div>
+    </div>
+    <div class="module-card" onclick="goPage('typhoid')">
+      <div class="module-card-top">
+        <div class="module-icon purple">💉</div>
+        <div><div class="module-name">Suntikan Typhoid</div><div class="module-desc">Pantau status suntikan typhoid staf dan tarikh tamat tempoh di setiap cawangan</div></div>
+        <div class="module-arrow">→</div>
+      </div>
+      <div class="module-stats">
+        <div class="mstat"><div class="mstat-val n">${ty.length}</div><div class="mstat-lbl">Jumlah Staf</div></div>
+        <div class="mstat"><div class="mstat-val g">${yAktif}</div><div class="mstat-lbl">Aktif</div></div>
+        <div class="mstat"><div class="mstat-val r">${yBelum}</div><div class="mstat-lbl">Belum Suntik</div></div>
+        <div class="mstat"><div class="mstat-val a">${yLuput}</div><div class="mstat-lbl">Perlu Renew</div></div>
+      </div>
+    </div>`;
+
+  // Alert list
+  const alerts = [];
+  DB.bahan.filter(r=>['luput','hampir'].includes(bahanStatus(r))).forEach(r=>{
+    const st=bahanStatus(r); const d=daysLeft(r.luput);
+    const dTxt=d<0?`Luput ${Math.abs(d)} hari lalu`:`${d} hari lagi`;
+    alerts.push({dot:st==='luput'?'r':'a',name:esc(r.nama),meta:`Bahan Mentah · ${esc(cawLabel(r.cawangan))}`,days:dTxt,daysCls:st==='luput'?'r':'a',onclick:`goPage('bahan')`});
+  });
+  DB.training.filter(r=>['belum','luput','hampir'].includes(trStatus(r))).forEach(r=>{
+    const st=trStatus(r);
+    const dTxt=st==='belum'?'Belum hadir training':st==='luput'?`Luput ${Math.abs(daysLeft(r.tamat))} hari lalu`:`${daysLeft(r.tamat)} hari lagi`;
+    alerts.push({dot:st==='belum'?'b':st==='luput'?'r':'a',name:esc(r.nama),meta:`Halal Training · ${esc(cawLabel(r.cawangan))}`,days:dTxt,daysCls:st==='belum'?'b':st==='luput'?'r':'a',onclick:`goPage('training')`});
+  });
+  DB.typhoid.filter(r=>['belum','luput','hampir'].includes(tyStatus(r))).forEach(r=>{
+    const st=tyStatus(r);
+    const dTxt=st==='belum'?'Belum suntik typhoid':st==='luput'?`Luput ${Math.abs(daysLeft(r.tamat))} hari lalu`:`${daysLeft(r.tamat)} hari lagi`;
+    alerts.push({dot:st==='belum'?'p':st==='luput'?'r':'a',name:esc(r.nama),meta:`Suntikan Typhoid · ${esc(cawLabel(r.cawangan))}`,days:dTxt,daysCls:st==='belum'?'p':st==='luput'?'r':'a',onclick:`goPage('typhoid')`});
+  });
+
+  const list = document.getElementById('alertList');
+  if(!alerts.length){ list.innerHTML='<div class="no-alerts">✅ Tiada isu yang memerlukan perhatian segera</div>'; return; }
+  list.innerHTML = alerts.slice(0,12).map(a=>`
+    <div class="alert-row" onclick="${a.onclick}" style="cursor:pointer">
+      <div class="alert-dot ${a.dot}"></div>
+      <div class="alert-info"><div class="alert-name">${a.name}</div><div class="alert-meta">${a.meta}</div></div>
+      <div class="alert-days ${a.daysCls}">${a.days}</div>
+    </div>`).join('') + (alerts.length>12?`<div style="padding:12px 24px;font-size:12px;color:var(--gray-400);text-align:center">+${alerts.length-12} lagi isu...</div>`:'');
+}
+
+/* ═══════════════════════════════════════════════
+   BAHAN MENTAH MODULE
+═══════════════════════════════════════════════ */
+function renderBahanCawTabs() {
+  const all=[{id:'semua',label:'Semua Cawangan'},...CAWANGAN];
+  document.getElementById('bahan-cawBar').innerHTML = all.map(c=>{
+    const sub=c.id==='semua'?DB.bahan:DB.bahan.filter(r=>r.cawangan===c.id);
+    const cnt=sub.length;
+    const warn=sub.filter(r=>['luput','hampir'].includes(bahanStatus(r))).length;
+    return`<button class="ctab${activeCaw.bahan===c.id?' active':''}" onclick="setBahanCaw('${c.id}')">${esc(c.label)}<span class="cbadge${warn>0?' danger':''}">${cnt}</span></button>`;
+  }).join('');
+}
+function renderBahanStats() {
+  const sub=activeCaw.bahan==='semua'?DB.bahan:DB.bahan.filter(r=>r.cawangan===activeCaw.bahan);
+  const a=sub.filter(r=>bahanStatus(r)==='aktif').length, h=sub.filter(r=>bahanStatus(r)==='hampir').length, l=sub.filter(r=>bahanStatus(r)==='luput').length, o=sub.filter(r=>bahanStatus(r)==='nonaktif').length;
+  document.getElementById('bahan-stats').innerHTML=`
+    <div class="stat-card sc-total"><div class="stat-lbl">Jumlah</div><div class="stat-val sv-n">${sub.length}</div></div>
+    <div class="stat-card sc-ok"><div class="stat-lbl">Aktif</div><div class="stat-val sv-g">${a}</div></div>
+    <div class="stat-card sc-warn"><div class="stat-lbl">Hampir Luput</div><div class="stat-val sv-a">${h}</div></div>
+    <div class="stat-card sc-bad"><div class="stat-lbl">Sijil Luput</div><div class="stat-val sv-r">${l}</div></div>
+    <div class="stat-card sc-off"><div class="stat-lbl">Tidak Aktif</div><div class="stat-val sv-d">${o}</div></div>`;
+  // Alert bar
+  const bar=document.getElementById('bahan-alertBar'),msg=document.getElementById('bahan-alertMsg');
+  const parts=[];if(l)parts.push(`<strong>${l}</strong> sijil luput`);if(h)parts.push(`<strong>${h}</strong> hampir luput`);
+  if(parts.length){msg.innerHTML=parts.join(' · ')+' — Sila renew segera!';bar.classList.add('show');}else bar.classList.remove('show');
+}
+function renderBahan() {
+  const search=document.getElementById('bahan-search').value.toLowerCase();
+  const kat=document.getElementById('bahan-katFilter').value;
+  const f=DB.bahan.filter(r=>{
+    const mc=activeCaw.bahan==='semua'||r.cawangan===activeCaw.bahan;
+    const ms=[r.nama,r.saintifik,r.pengilang,r.sijil,r.badan,r.nota].join(' ').toLowerCase().includes(search);
+    const mk=!kat||r.kat===kat;
+    const mst=!statusFlt.bahan||bahanStatus(r)===statusFlt.bahan;
+    return mc&&ms&&mk&&mst;
+  });
+  const tbody=document.getElementById('bahan-tbody'),empty=document.getElementById('bahan-empty');
+  if(!f.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';
+  tbody.innerHTML=f.map(r=>{
+    const st=bahanStatus(r),dl=r.aktif?daysLeft(r.luput):null;
+    const dTxt=dl===null?'—':dl<0?`${Math.abs(dl)} hari lalu`:dl===0?'Hari ini':`${dl} hari lagi`;
+    const dCls=dl!==null&&dl<0?'danger':dl!==null&&dl<=WARN_BAHAN?'warn':'';
+    const vBtn=r.fail?`<button class="ab v" onclick="viewBahanFile('${r.id}')">👁 Sijil</button>`:'';
+    return`<tr class="${st==='nonaktif'?'row-off':''}">
+      <td><div class="nm${st==='nonaktif'?' off':''}">${esc(r.nama)}</div>${r.saintifik?`<div class="nm-sci">${esc(r.saintifik)}</div>`:''}<div class="nm-meta">${esc(r.pengilang||'')}</div>${r.nota?`<div class="nm-remark">💬 ${esc(r.nota)}</div>`:''}</td>
+      <td>${katBadge(r.kat)}</td>
+      <td><span class="caw-tag">${esc(cawLabel(r.cawangan))}</span></td>
+      <td><div style="font-size:12px;font-weight:600">${esc(r.badan||'')}</div><div class="nm-meta">${esc(r.sijil||'')}</div></td>
+      <td><div class="dt">${fmtDate(r.luput)}</div><div class="dl ${dCls}">${dTxt}</div></td>
+      <td>${statusPill(st)}</td>
+      <td><div class="act-btns">${vBtn}${isAdmin?`<button class="ab e" onclick="openBahanModal('${r.id}')">✏ Edit</button><button class="ab d" onclick="delBahan('${r.id}')">🗑</button>`:''}</div></td>
+    </tr>`;
+  }).join('');
+}
+function setBahanCaw(id){activeCaw.bahan=id;renderBahanCawTabs();renderBahanStats();renderBahan();}
+function setBahanFlt(s){
+  statusFlt.bahan=s;
+  ['all','aktif','hampir','luput','nonaktif'].forEach(k=>document.getElementById('bf-'+k).className='pill');
+  const map={'':'all','aktif':'aktif','hampir':'hampir','luput':'luput','nonaktif':'nonaktif'};
+  const cls={aktif:'on',hampir:'on-a',luput:'on-r',nonaktif:'on-gray','':'on'};
+  document.getElementById('bf-'+(map[s]||'all')).className='pill '+(cls[s]||'on');
+  renderBahan();
+}
+
+/* ═══════════════════════════════════════════════
+   TRAINING MODULE
+═══════════════════════════════════════════════ */
+function renderTrCawTabs() {
+  const all=[{id:'semua',label:'Semua Cawangan'},...CAWANGAN];
+  document.getElementById('tr-cawBar').innerHTML=all.map(c=>{
+    const sub=c.id==='semua'?DB.training:DB.training.filter(r=>r.cawangan===c.id);
+    const warn=sub.filter(r=>['belum','luput','hampir'].includes(trStatus(r))).length;
+    return`<button class="ctab${activeCaw.training===c.id?' active':''}" onclick="setTrCaw('${c.id}')">${esc(c.label)}<span class="cbadge${warn>0?' warn':''}">${sub.length}</span></button>`;
+  }).join('');
+}
+function renderTrStats() {
+  const sub=activeCaw.training==='semua'?DB.training:DB.training.filter(r=>r.cawangan===activeCaw.training);
+  const h=sub.filter(r=>trStatus(r)==='hadir').length,b=sub.filter(r=>trStatus(r)==='belum').length,hm=sub.filter(r=>trStatus(r)==='hampir').length,l=sub.filter(r=>trStatus(r)==='luput').length;
+  document.getElementById('tr-stats').innerHTML=`
+    <div class="stat-card sc-total"><div class="stat-lbl">Jumlah Staf</div><div class="stat-val sv-n">${sub.length}</div></div>
+    <div class="stat-card sc-ok"><div class="stat-lbl">Telah Hadir</div><div class="stat-val sv-g">${h}</div></div>
+    <div class="stat-card sc-blue"><div class="stat-lbl">Belum Hadir</div><div class="stat-val sv-b">${b}</div></div>
+    <div class="stat-card sc-warn"><div class="stat-lbl">Hampir / Luput</div><div class="stat-val sv-a">${hm+l}</div></div>`;
+  const bar=document.getElementById('tr-alertBar'),msg=document.getElementById('tr-alertMsg');
+  const parts=[];if(b)parts.push(`<strong>${b}</strong> staf belum hadir training`);if(hm+l)parts.push(`<strong>${hm+l}</strong> perlu renew`);
+  if(parts.length){msg.innerHTML=parts.join(' · ')+'.';bar.classList.add('show');}else bar.classList.remove('show');
+}
+function renderTraining() {
+  const search=document.getElementById('tr-search').value.toLowerCase();
+  const flt=document.getElementById('tr-filter').value;
+  const f=DB.training.filter(r=>{
+    const mc=activeCaw.training==='semua'||r.cawangan===activeCaw.training;
+    const ms=[r.nama,r.jawatan,r.nota].join(' ').toLowerCase().includes(search);
+    const mst=!flt||trStatus(r)===flt;
+    return mc&&ms&&mst;
+  });
+  const tbody=document.getElementById('tr-tbody'),empty=document.getElementById('tr-empty');
+  if(!f.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';
+  tbody.innerHTML=f.map(r=>{
+    const st=trStatus(r),dl=r.tamat?daysLeft(r.tamat):null;
+    const dTxt=st==='belum'?'—':dl===null?'—':dl<0?`${Math.abs(dl)} hari lalu`:dl===0?'Hari ini':`${dl} hari lagi`;
+    const dCls=dl!==null&&dl<0?'danger':dl!==null&&dl<=WARN_TR?'warn':'';
+    return`<tr>
+      <td><div class="staff-nm">${esc(r.nama)}</div><div class="staff-pos">${esc(r.jawatan||'')}</div>${r.nota?`<div class="nm-remark">💬 ${esc(r.nota)}</div>`:''}</td>
+      <td><span class="caw-tag">${esc(cawLabel(r.cawangan))}</span></td>
+      <td><div class="dt">${fmtDate(r.tarikh)}</div></td>
+      <td><div class="dt">${fmtDate(r.tamat)}</div><div class="dl ${dCls}">${dTxt}</div></td>
+      <td>${statusPill(st)}</td>
+      <td><div class="act-btns">${isAdmin?`<button class="ab e" onclick="openTrModal('${r.id}')">✏ Edit</button><button class="ab d" onclick="delTr('${r.id}')">🗑</button>`:''}</div></td>
+    </tr>`;
+  }).join('');
+}
+function setTrCaw(id){activeCaw.training=id;renderTrCawTabs();renderTrStats();renderTraining();}
+
+/* ═══════════════════════════════════════════════
+   TYPHOID MODULE
+═══════════════════════════════════════════════ */
+function renderTyCawTabs() {
+  const all=[{id:'semua',label:'Semua Cawangan'},...CAWANGAN];
+  document.getElementById('ty-cawBar').innerHTML=all.map(c=>{
+    const sub=c.id==='semua'?DB.typhoid:DB.typhoid.filter(r=>r.cawangan===c.id);
+    const warn=sub.filter(r=>['belum','luput','hampir'].includes(tyStatus(r))).length;
+    return`<button class="ctab${activeCaw.typhoid===c.id?' active':''}" onclick="setTyCaw('${c.id}')">${esc(c.label)}<span class="cbadge${warn>0?' danger':''}">${sub.length}</span></button>`;
+  }).join('');
+}
+function renderTyStats() {
+  const sub=activeCaw.typhoid==='semua'?DB.typhoid:DB.typhoid.filter(r=>r.cawangan===activeCaw.typhoid);
+  const a=sub.filter(r=>tyStatus(r)==='aktif').length,b=sub.filter(r=>tyStatus(r)==='belum').length,h=sub.filter(r=>tyStatus(r)==='hampir').length,l=sub.filter(r=>tyStatus(r)==='luput').length;
+  document.getElementById('ty-stats').innerHTML=`
+    <div class="stat-card sc-total"><div class="stat-lbl">Jumlah Staf</div><div class="stat-val sv-n">${sub.length}</div></div>
+    <div class="stat-card sc-ok"><div class="stat-lbl">Suntikan Aktif</div><div class="stat-val sv-g">${a}</div></div>
+    <div class="stat-card sc-purple"><div class="stat-lbl">Belum Suntik</div><div class="stat-val sv-p">${b}</div></div>
+    <div class="stat-card sc-warn"><div class="stat-lbl">Hampir / Luput</div><div class="stat-val sv-a">${h+l}</div></div>`;
+  const bar=document.getElementById('ty-alertBar'),msg=document.getElementById('ty-alertMsg');
+  const parts=[];if(b)parts.push(`<strong>${b}</strong> staf belum suntik typhoid`);if(h+l)parts.push(`<strong>${h+l}</strong> perlu renew`);
+  if(parts.length){msg.innerHTML=parts.join(' · ')+'.';bar.classList.add('show');}else bar.classList.remove('show');
+}
+function renderTyphoid() {
+  const search=document.getElementById('ty-search').value.toLowerCase();
+  const flt=document.getElementById('ty-filter').value;
+  const f=DB.typhoid.filter(r=>{
+    const mc=activeCaw.typhoid==='semua'||r.cawangan===activeCaw.typhoid;
+    const ms=[r.nama,r.jawatan,r.klinik,r.nota].join(' ').toLowerCase().includes(search);
+    const mst=!flt||tyStatus(r)===flt;
+    return mc&&ms&&mst;
+  });
+  const tbody=document.getElementById('ty-tbody'),empty=document.getElementById('ty-empty');
+  if(!f.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';
+  tbody.innerHTML=f.map(r=>{
+    const st=tyStatus(r),dl=r.tamat?daysLeft(r.tamat):null;
+    const dTxt=st==='belum'?'—':dl===null?'—':dl<0?`${Math.abs(dl)} hari lalu`:dl===0?'Hari ini':`${dl} hari lagi`;
+    const dCls=dl!==null&&dl<0?'danger':dl!==null&&dl<=WARN_TY?'warn':'';
+    return`<tr>
+      <td><div class="staff-nm">${esc(r.nama)}</div><div class="staff-pos">${esc(r.jawatan||'')}</div>${r.klinik?`<div class="nm-meta">🏥 ${esc(r.klinik)}</div>`:''}</td>
+      <td><span class="caw-tag">${esc(cawLabel(r.cawangan))}</span></td>
+      <td><div class="dt">${fmtDate(r.tarikh)}</div></td>
+      <td><div class="dt">${fmtDate(r.tamat)}</div><div class="dl ${dCls}">${dTxt}</div></td>
+      <td>${statusPill(st)}</td>
+      <td><div class="act-btns">${isAdmin?`<button class="ab e" onclick="openTyModal('${r.id}')">✏ Edit</button><button class="ab d" onclick="delTy('${r.id}')">🗑</button>`:''}</div></td>
+    </tr>`;
+  }).join('');
+}
+function setTyCaw(id){activeCaw.typhoid=id;renderTyCawTabs();renderTyStats();renderTyphoid();}
+
+/* ═══════════════════════════════════════════════
+   MODAL HELPERS
+═══════════════════════════════════════════════ */
+function closeMod(id){document.getElementById(id).classList.remove('open');}
+function openMod(id){document.getElementById(id).classList.add('open');}
+
+function populateCawSel(id){
+  document.getElementById(id).innerHTML=CAWANGAN.map(c=>`<option value="${c.id}">${esc(c.label)}</option>`).join('');
+}
+
+/* ─── BAHAN MODAL ─── */
+function openBahanModal(id) {
+  editing.bahan=id||null; bahanFileData=null;
+  populateCawSel('bCaw');
+  document.getElementById('bahanUpload').classList.remove('has-file');
+  document.getElementById('bahanUploadLbl').innerHTML='<strong>Klik muat naik sijil</strong> atau seret ke sini';
+  document.getElementById('bahanFile').value='';
+  const fields=['bNama','bSaintifik','bPengilang','bAlamat','bBadan','bSijil','bMula','bLuput','bNota'];
+  if(id){
+    const r=DB.bahan.find(x=>x.id===id);
+    document.getElementById('bahanModalTitle').textContent='Edit Bahan Mentah';
+    document.getElementById('bNama').value=r.nama||'';
+    document.getElementById('bSaintifik').value=r.saintifik||'';
+    document.getElementById('bKat').value=r.kat||'haiwan';
+    document.getElementById('bCaw').value=r.cawangan||CAWANGAN[0]?.id||'';
+    document.getElementById('bPengilang').value=r.pengilang||'';
+    document.getElementById('bAlamat').value=r.alamat||'';
+    document.getElementById('bBadan').value=r.badan||'';
+    document.getElementById('bSijil').value=r.sijil||'';
+    document.getElementById('bMula').value=r.mula||'';
+    document.getElementById('bLuput').value=r.luput||'';
+    document.getElementById('bNota').value=r.nota||'';
+    document.getElementById('bahanAktif').checked=r.aktif!==false;
+    if(r.fail){document.getElementById('bahanUpload').classList.add('has-file');document.getElementById('bahanUploadLbl').innerHTML=`✅ Fail sedia ada: <strong>${esc(r.fail.name||'sijil')}</strong>`;}
+  } else {
+    document.getElementById('bahanModalTitle').textContent='Tambah Bahan Mentah';
+    fields.forEach(f=>document.getElementById(f).value='');
+    document.getElementById('bahanAktif').checked=true;
+    document.getElementById('bKat').value='haiwan';
+    document.getElementById('bCaw').value=activeCaw.bahan!=='semua'?activeCaw.bahan:(CAWANGAN[0]?.id||'');
+  }
+  updateBahanAktifLbl();
+  openMod('bahanModal');
+}
+function updateBahanAktifLbl(){
+  const c=document.getElementById('bahanAktif').checked;
+  document.getElementById('bahanAktifSub').textContent=c?'Bahan sedang digunakan':'Bahan tidak digunakan (tidak aktif)';
+}
+function handleBahanFile(e){
+  const f=e.target.files[0]; if(!f)return;
+  if(f.size>10*1024*1024){toast('Fail terlalu besar (maks 10MB)','err');return;}
+  const rd=new FileReader();
+  rd.onload=ev=>{bahanFileData={name:f.name,type:f.type,dataUrl:ev.target.result};document.getElementById('bahanUpload').classList.add('has-file');document.getElementById('bahanUploadLbl').innerHTML=`✅ <strong>${esc(f.name)}</strong>`;};
+  rd.readAsDataURL(f);
+}
+function viewBahanFile(id){
+  const r=DB.bahan.find(x=>x.id===id); if(!r?.fail)return;
+  document.getElementById('viewTitle').textContent=r.nama+' — Sijil Halal';
+  const body=document.getElementById('viewBody');
+  const ext=(r.fail.name||'').split('.').pop().toLowerCase();
+  body.innerHTML=ext==='pdf'?`<iframe src="${r.fail.dataUrl}" style="width:100%;height:600px;border:none;border-radius:8px"></iframe>`:`<img src="${r.fail.dataUrl}" style="width:100%;border-radius:8px"/>`;
+  openMod('viewModal');
+}
+function saveBahan(){
+  const nama=document.getElementById('bNama').value.trim();
+  const pengilang=document.getElementById('bPengilang').value.trim();
+  const badan=document.getElementById('bBadan').value.trim();
+  const sijil=document.getElementById('bSijil').value.trim();
+  const luput=document.getElementById('bLuput').value;
+  if(!nama){toast('Sila masukkan nama bahan','err');return;}
+  if(!pengilang){toast('Sila masukkan nama pengilang','err');return;}
+  if(!badan){toast('Sila masukkan badan sijil halal','err');return;}
+  if(!sijil){toast('Sila masukkan no. rujukan sijil','err');return;}
+  if(!luput){toast('Sila pilih tarikh luput','err');return;}
+  const ex=editing.bahan?DB.bahan.find(x=>x.id===editing.bahan):null;
+  const rec={id:editing.bahan||uid(),aktif:document.getElementById('bahanAktif').checked,nama,saintifik:document.getElementById('bSaintifik').value.trim(),kat:document.getElementById('bKat').value,cawangan:document.getElementById('bCaw').value,pengilang,alamat:document.getElementById('bAlamat').value.trim(),badan,sijil,mula:document.getElementById('bMula').value||null,luput,nota:document.getElementById('bNota').value.trim(),fail:bahanFileData||(ex?ex.fail:null)};
+  if(editing.bahan){DB.bahan=DB.bahan.map(r=>r.id===editing.bahan?rec:r);}else{DB.bahan.push(rec);}
+  saveAll(); closeMod('bahanModal'); renderBahanCawTabs(); renderBahanStats(); renderBahan();
+  if(activePage==='home')renderDashboard();
+  toast(editing.bahan?'Rekod bahan dikemaskini ✓':'Bahan baru ditambah ✓','ok');
+}
+function delBahan(id){
+  const r=DB.bahan.find(x=>x.id===id); if(!confirm(`Padam "${r.nama}"?`))return;
+  DB.bahan=DB.bahan.filter(x=>x.id!==id); saveAll(); renderBahanCawTabs(); renderBahanStats(); renderBahan();
+  if(activePage==='home')renderDashboard(); toast('Rekod dipadam.','ok');
+}
+
+/* ─── TRAINING MODAL ─── */
+function openTrModal(id){
+  editing.training=id||null; populateCawSel('tCaw');
+  if(id){
+    const r=DB.training.find(x=>x.id===id);
+    document.getElementById('trModalTitle').textContent='Edit Rekod Training';
+    document.getElementById('tNama').value=r.nama||'';
+    document.getElementById('tJawatan').value=r.jawatan||'';
+    document.getElementById('tCaw').value=r.cawangan||CAWANGAN[0]?.id||'';
+    document.getElementById('tStatus').value=r.status||'belum';
+    document.getElementById('tTarikh').value=r.tarikh||'';
+    document.getElementById('tTamat').value=r.tamat||'';
+    document.getElementById('tNota').value=r.nota||'';
+  } else {
+    document.getElementById('trModalTitle').textContent='Tambah Rekod Training';
+    ['tNama','tJawatan','tTarikh','tTamat','tNota'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('tStatus').value='belum';
+    document.getElementById('tCaw').value=activeCaw.training!=='semua'?activeCaw.training:(CAWANGAN[0]?.id||'');
+  }
+  openMod('trModal');
+}
+function saveTraining(){
+  const nama=document.getElementById('tNama').value.trim();
+  if(!nama){toast('Sila masukkan nama staf','err');return;}
+  const rec={id:editing.training||uid(),nama,jawatan:document.getElementById('tJawatan').value.trim(),cawangan:document.getElementById('tCaw').value,status:document.getElementById('tStatus').value,tarikh:document.getElementById('tTarikh').value||'',tamat:document.getElementById('tTamat').value||'',nota:document.getElementById('tNota').value.trim()};
+  if(editing.training){DB.training=DB.training.map(r=>r.id===editing.training?rec:r);}else{DB.training.push(rec);}
+  saveAll(); closeMod('trModal'); renderTrCawTabs(); renderTrStats(); renderTraining();
+  if(activePage==='home')renderDashboard(); toast(editing.training?'Rekod training dikemaskini ✓':'Rekod training ditambah ✓','ok');
+}
+function delTr(id){
+  const r=DB.training.find(x=>x.id===id); if(!confirm(`Padam rekod "${r.nama}"?`))return;
+  DB.training=DB.training.filter(x=>x.id!==id); saveAll(); renderTrCawTabs(); renderTrStats(); renderTraining();
+  if(activePage==='home')renderDashboard(); toast('Rekod dipadam.','ok');
+}
+
+/* ─── TYPHOID MODAL ─── */
+function openTyModal(id){
+  editing.typhoid=id||null; populateCawSel('yCaw');
+  if(id){
+    const r=DB.typhoid.find(x=>x.id===id);
+    document.getElementById('tyModalTitle').textContent='Edit Rekod Suntikan';
+    document.getElementById('yNama').value=r.nama||'';
+    document.getElementById('yJawatan').value=r.jawatan||'';
+    document.getElementById('yCaw').value=r.cawangan||CAWANGAN[0]?.id||'';
+    document.getElementById('yStatus').value=r.status||'belum';
+    document.getElementById('yTarikh').value=r.tarikh||'';
+    document.getElementById('yTamat').value=r.tamat||'';
+    document.getElementById('yKlinik').value=r.klinik||'';
+    document.getElementById('yNota').value=r.nota||'';
+  } else {
+    document.getElementById('tyModalTitle').textContent='Tambah Rekod Suntikan';
+    ['yNama','yJawatan','yTarikh','yTamat','yKlinik','yNota'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('yStatus').value='belum';
+    document.getElementById('yCaw').value=activeCaw.typhoid!=='semua'?activeCaw.typhoid:(CAWANGAN[0]?.id||'');
+  }
+  openMod('tyModal');
+}
+function saveTyphoid(){
+  const nama=document.getElementById('yNama').value.trim();
+  if(!nama){toast('Sila masukkan nama staf','err');return;}
+  const st=document.getElementById('yStatus').value;
+  const tamat=document.getElementById('yTamat').value;
+  if(st==='aktif'&&!tamat){toast('Sila masukkan tarikh tamat suntikan','err');return;}
+  const rec={id:editing.typhoid||uid(),nama,jawatan:document.getElementById('yJawatan').value.trim(),cawangan:document.getElementById('yCaw').value,status:st,tarikh:document.getElementById('yTarikh').value||'',tamat,klinik:document.getElementById('yKlinik').value.trim(),nota:document.getElementById('yNota').value.trim()};
+  if(editing.typhoid){DB.typhoid=DB.typhoid.map(r=>r.id===editing.typhoid?rec:r);}else{DB.typhoid.push(rec);}
+  saveAll(); closeMod('tyModal'); renderTyCawTabs(); renderTyStats(); renderTyphoid();
+  if(activePage==='home')renderDashboard(); toast(editing.typhoid?'Rekod suntikan dikemaskini ✓':'Rekod suntikan ditambah ✓','ok');
+}
+function delTy(id){
+  const r=DB.typhoid.find(x=>x.id===id); if(!confirm(`Padam rekod "${r.nama}"?`))return;
+  DB.typhoid=DB.typhoid.filter(x=>x.id!==id); saveAll(); renderTyCawTabs(); renderTyStats(); renderTyphoid();
+  if(activePage==='home')renderDashboard(); toast('Rekod dipadam.','ok');
+}
+
+/* ═══════════════════════════════════════════════
+   CAWANGAN MANAGER
+═══════════════════════════════════════════════ */
+function openCawMgr(){ renderCawList(); document.getElementById('newCawInp').value=''; openMod('cawModal'); }
+function renderCawList(){
+  const list=document.getElementById('cawList');
+  if(!CAWANGAN.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--gray-400)">Tiada cawangan.</div>';return;}
+  const allCnt=id=>[...DB.bahan,...DB.training,...DB.typhoid].filter(r=>(r.cawangan||r.cawangan_id)===id).length;
+  list.innerHTML=CAWANGAN.map(c=>`
+    <div class="caw-row">
+      <span style="color:var(--gray-300);font-size:16px">⠿</span>
+      <input class="caw-inp" value="${esc(c.label)}" onblur="renameCaw('${c.id}',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
+      <span class="caw-cnt">${allCnt(c.id)} rekod</span>
+      <button class="caw-del" onclick="delCaw('${c.id}')">×</button>
+    </div>`).join('');
+}
+function renameCaw(id,lbl){
+  lbl=lbl.trim(); if(!lbl){renderCawList();return;}
+  const c=CAWANGAN.find(x=>x.id===id); if(!c||c.label===lbl)return;
+  c.label=lbl; saveAll(); renderCawList(); toast(`Cawangan dinamakan: "${lbl}" ✓`,'ok');
+}
+function addCaw(){
+  const inp=document.getElementById('newCawInp'),lbl=inp.value.trim(); if(!lbl){inp.focus();return;}
+  let id=lbl.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)||('C'+Date.now().toString(36).slice(-4).toUpperCase());
+  let base=id,n=2; while(CAWANGAN.find(c=>c.id===id))id=base+(n++);
+  CAWANGAN.push({id,label:lbl}); saveAll(); inp.value=''; renderCawList(); toast(`Cawangan "${lbl}" ditambah ✓`,'ok');
+}
+function delCaw(id){
+  const c=CAWANGAN.find(x=>x.id===id);
+  const cnt=[...DB.bahan,...DB.training,...DB.typhoid].filter(r=>r.cawangan===id).length;
+  if(!confirm(`Padam cawangan "${c.label}"?${cnt?`\n⚠️ ${cnt} rekod dalam cawangan ini.`:''}`))return;
+  CAWANGAN=CAWANGAN.filter(x=>x.id!==id); saveAll(); renderCawList(); toast(`Cawangan dipadam.`,'ok');
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+let toastT;
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async ()=>{
+  await loadAll();
+  renderDashboard();
+  document.getElementById('btnAdd').style.display='none';
+  setTimeout(()=>document.getElementById('loadingScreen').classList.add('hide'),800);
+});
+</script>
+</body>
+</html>
